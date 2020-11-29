@@ -1,0 +1,79 @@
+#Us companies and key indicators and ceo/chair with at least one social media
+SELECT DISTINCT ?business ?businessLabel ?officialname ?employees ?origindate ?profit ?assets ?equity ?markcap
+(GROUP_CONCAT(DISTINCT ?industryLabel; SEPARATOR = ", ") AS ?industries)
+(GROUP_CONCAT(DISTINCT ?ceoLabel; SEPARATOR = ", ") AS ?ceos)
+(GROUP_CONCAT(DISTINCT ?chairLabel; SEPARATOR = ", ") AS ?chairs)
+(GROUP_CONCAT(DISTINCT ?hqLabel; SEPARATOR = ", ") AS ?hqs)
+(GROUP_CONCAT(DISTINCT ?groupLabel; SEPARATOR = ", ") AS ?groups)
+WHERE {
+  VALUES ?socialmediatypes {
+    wdt:P2013
+    wdt:P4264
+    wdt:P2002
+  }
+  ?business (wdt:P31/(wdt:P279*)) wd:Q4830453;
+    wdt:P17 wd:Q30; #rotate this for each country
+    ?socialmediatypes ?socialmedia.
+  OPTIONAL { ?business wdt:P1128 ?employees. }
+  OPTIONAL { ?business wdt:P1448 ?officialname. }
+  OPTIONAL { ?business wdt:P571 ?origindate. }
+  OPTIONAL { ?business wdt:P2295 ?profit. }
+  OPTIONAL { ?business wdt:P452 ?industry. }
+  OPTIONAL { ?business wdt:P2295 ?profit. }
+  OPTIONAL { ?business wdt:P2403 ?assets. }
+  OPTIONAL { ?business wdt:P2137 ?equity. }
+  OPTIONAL { ?business wdt:P2226 ?markcap. }
+  OPTIONAL { ?business wdt:P159 ?hq. }
+  OPTIONAL { ?business (p:P169/ps:P169) ?ceo. }
+  OPTIONAL { ?business wdt:P488 ?chair. }
+  OPTIONAL { ?business wdt:P361 ?group. }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "en".
+    ?business rdfs:label ?businessLabel.
+    ?industry rdfs:label ?industryLabel.
+    ?ceo rdfs:label ?ceoLabel.
+    ?chair rdfs:label ?chairLabel.
+    ?hq rdfs:label ?hqLabel.
+    ?group rdfs:label ?groupLabel.
+  }
+}
+GROUP BY ?business ?businessLabel ?officialname ?shortname ?employees ?origindate ?profit ?assets ?equity ?markcap
+
+
+#acquisitions of companies from US and German based parent companies, filtered to have min full proportion and date later than 1990 if known
+SELECT DISTINCT ?company ?companyLabel ?owner ?ownerLabel ?acquiredate ?pointintime
+WHERE {
+  VALUES ?socialmediatypes {
+    wdt:P2013
+    wdt:P4264
+    wdt:P2002
+  }
+  VALUES ?countries {
+    wd:Q30
+  }
+    VALUES ?propownership {
+    p:P749
+    p:P127
+  }
+  VALUES ?ownership {
+    ps:P749
+    ps:P127
+  }
+  ?company ?propownership ?ownStat;
+    (wdt:P31/(wdt:P279*)) wd:Q4830453;
+    ?socialmediatypes ?socialmediacompany.
+  ?owner (wdt:P31/(wdt:P279*)) wd:Q4830453;
+    wdt:P17 ?countries;
+    ?socialmediatypes ?socialmediaowner.
+  ?ownStat ?ownership ?owner.
+  OPTIONAL { ?ownStat pq:P580 ?acquiredate. }
+  OPTIONAL { ?ownStat pq:P582 ?enddate. }
+  OPTIONAL { ?ownStat pq:P585 ?pointintime. }
+  OPTIONAL { ?ownStat pq:P1107 ?proportion. }
+  FILTER(((YEAR(?acquiredate)) > 1990 ) || (!(BOUND(?acquiredate))))
+  FILTER(((YEAR(?pointintime)) > 1990 ) || (!(BOUND(?pointintime))))
+  FILTER(!(BOUND(?enddate))) #must be unbound or nonexistent (current acq)
+  FILTER((((?proportion > ".5"^^xsd:decimal) && (?proportion <= 1 )) || ((?proportion > 50 ) && (?proportion <= 100 ))) || (!(BOUND(?proportion))))
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+}
+LIMIT 99999
