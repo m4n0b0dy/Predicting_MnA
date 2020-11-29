@@ -1,58 +1,60 @@
 #https://gist.github.com/sirex/b5fdf0228cf03f5b9076b5975c5591a5
-
-from pandas.io.json import json_normalize
+from pandas import json_normalize
 from SPARQLWrapper import SPARQLWrapper, JSON
+from multiprocessing.pool import ThreadPool as Pool
+from os import path
+from time import sleep
+import sys
+sys.path.insert(0, '../configs/')
+from sparql_config import *
+
+THREAD_COUNT = 5
+SLP = .01
 
 def select(query, service='https://query.wikidata.org/sparql'):
-    sparql = SPARQLWrapper(service)
-    sparql.setQuery(query)
-    sparql.setReturnFormat(JSON)
-    result = sparql.query().convert()
-    return json_normalize(result['results']['bindings'])
+		sparql = SPARQLWrapper(service)
+		sparql.setQuery(query)
+		sparql.setReturnFormat(JSON)
+		result = sparql.query().convert()
+		return json_normalize(result['results']['bindings'])
 
-query_string = """
-SELECT DISTINCT ?business ?businessLabel ?officialname ?employees ?origindate ?profit ?assets ?equity ?markcap
-(GROUP_CONCAT(DISTINCT ?industryLabel; SEPARATOR = ", ") AS ?industries)
-(GROUP_CONCAT(DISTINCT ?ceoLabel; SEPARATOR = ", ") AS ?ceos)
-(GROUP_CONCAT(DISTINCT ?chairLabel; SEPARATOR = ", ") AS ?chairs)
-(GROUP_CONCAT(DISTINCT ?hqLabel; SEPARATOR = ", ") AS ?hqs)
-(GROUP_CONCAT(DISTINCT ?groupLabel; SEPARATOR = ", ") AS ?groups)
-WHERE {
-  VALUES ?socialmediatypes {
-    wdt:P2013
-    wdt:P4264
-    wdt:P2002
-  }
-  ?business (wdt:P31/(wdt:P279*)) wd:Q4830453;
-    wdt:P17 wd:%s; #rotate this for each country
-    ?socialmediatypes ?socialmedia.
-  OPTIONAL { ?business wdt:P1128 ?employees. }
-  OPTIONAL { ?business wdt:P1448 ?officialname. }
-  OPTIONAL { ?business wdt:P571 ?origindate. }
-  OPTIONAL { ?business wdt:P2295 ?profit. }
-  OPTIONAL { ?business wdt:P452 ?industry. }
-  OPTIONAL { ?business wdt:P2295 ?profit. }
-  OPTIONAL { ?business wdt:P2403 ?assets. }
-  OPTIONAL { ?business wdt:P2137 ?equity. }
-  OPTIONAL { ?business wdt:P2226 ?markcap. }
-  OPTIONAL { ?business wdt:P159 ?hq. }
-  OPTIONAL { ?business (p:P169/ps:P169) ?ceo. }
-  OPTIONAL { ?business wdt:P488 ?chair. }
-  OPTIONAL { ?business wdt:P361 ?group. }
-  SERVICE wikibase:label {
-    bd:serviceParam wikibase:language "en".
-    ?business rdfs:label ?businessLabel.
-    ?industry rdfs:label ?industryLabel.
-    ?ceo rdfs:label ?ceoLabel.
-    ?chair rdfs:label ?chairLabel.
-    ?hq rdfs:label ?hqLabel.
-    ?group rdfs:label ?groupLabel.
-  }
-}
-GROUP BY ?business ?businessLabel ?officialname ?shortname ?employees ?origindate ?profit ?assets ?equity ?markcap
-""" % "Q36"
+def extract_entities(country):
+	file_path = ENTITY_PATH.format(COUNTRY=country)
+	if path.exists(file_path):
+		print(country,'entities already exists')
+		return
+	query = ENTITY_QUERY_STRING % country
+	print('Querying entities',country)
+	data = select(query)
+	data['country'] = 'wd:'+country
+	data.to_csv(file_path)
+	print('Saved entities',country)
+	sleep(SLP)
 
+def extract_edges(country):
+	file_path = EDGE_PATH.format(COUNTRY=country)
+	if path.exists(file_path):
+		print(country,'edges already exists')
+		return
+	query = EDGE_QUERY_STRING % country
+	print('Querying edges',country)
+	data = select(query)
+	data.to_csv(file_path)
+	print('Saved edges',country)
+	sleep(SLP)
 
-data = select(query_string)
-data.to_csv('test.csv')
-print(data.head(10))
+#multithreaded extraction
+if __name__ == '__main__':
+	print('Starting Entity Extraction')
+	pool = Pool(THREAD_COUNT)
+	pool.map(extract_entities, COUNTRIES)
+	pool.close()
+	pool.join()
+	print('Completed Entity Extraction')
+
+	print('Starting Edge Extraction')
+	pool = Pool(THREAD_COUNT)
+	pool.map(extract_edges, COUNTRIES)
+	pool.close()
+	pool.join()
+	print('Completed Edge Extraction')

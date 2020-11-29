@@ -1,5 +1,12 @@
+#sorted countries by gdp
+SELECT ?country ?countryLabel ?population {
+  ?country wdt:P31 wd:Q6256.
+  ?country wdt:P2131 ?population .
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "en" }
+} ORDER BY DESC(?population)
+
 #Us companies and key indicators and ceo/chair with at least one social media
-SELECT DISTINCT ?business ?businessLabel ?officialname ?employees ?origindate ?profit ?assets ?equity ?markcap
+SELECT DISTINCT ?business ?businessLabel ?officialname ?employees ?origindate ?profit ?assets ?equity ?markcap ?country
 (GROUP_CONCAT(DISTINCT ?industryLabel; SEPARATOR = ", ") AS ?industries)
 (GROUP_CONCAT(DISTINCT ?ceoLabel; SEPARATOR = ", ") AS ?ceos)
 (GROUP_CONCAT(DISTINCT ?chairLabel; SEPARATOR = ", ") AS ?chairs)
@@ -13,7 +20,8 @@ WHERE {
   }
   ?business (wdt:P31/(wdt:P279*)) wd:Q4830453;
     wdt:P17 wd:Q30; #rotate this for each country
-    ?socialmediatypes ?socialmedia.
+    ?socialmediatypes ?socialmedia;
+    wdt:P17 ?country.
   OPTIONAL { ?business wdt:P1128 ?employees. }
   OPTIONAL { ?business wdt:P1448 ?officialname. }
   OPTIONAL { ?business wdt:P571 ?origindate. }
@@ -37,7 +45,7 @@ WHERE {
     ?group rdfs:label ?groupLabel.
   }
 }
-GROUP BY ?business ?businessLabel ?officialname ?shortname ?employees ?origindate ?profit ?assets ?equity ?markcap
+GROUP BY ?business ?businessLabel ?officialname ?shortname ?employees ?origindate ?profit ?assets ?equity ?markcap ?country
 
 
 #acquisitions of companies from US and German based parent companies, filtered to have min full proportion and date later than 1990 if known
