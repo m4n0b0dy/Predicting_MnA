@@ -12,7 +12,7 @@ THREAD_COUNT = 5
 SLP = .01
 
 def select(query, service='https://query.wikidata.org/sparql'):
-		sparql = SPARQLWrapper(service)
+		sparql = SPARQLWrapper(service, agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36')#saved my ass
 		sparql.setQuery(query)
 		sparql.setReturnFormat(JSON)
 		result = sparql.query().convert()

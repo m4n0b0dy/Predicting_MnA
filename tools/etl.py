@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from multiprocessing.pool import ThreadPool as Pool
 from os import path
 from os import listdir
@@ -24,7 +25,15 @@ def etl_entities(raw_df):
 	df[prev_cols] = raw_df[prev_cols]
 	df.columns = df.columns.map(ENTITY_COLUMNS)
 	val_cols = [_ for _ in df.columns if '_vals' in _]
-	df = df.fillna('')
+	quant_cols = [_ for _ in df.columns if '_quant' in _]
+	for col in quant_cols:
+		df[col] = df[col].astype(str).str.extract('(\d+)', expand=False)
+		df[col] = df[col].astype(float).fillna(0)
+		labels = [str(_)+'_'+col.replace('_quant','') for _ in range(0,10)]
+		df[col] = pd.cut(df[col], 10, labels=labels)
+	val_cols += quant_cols
+	ent_df = df.drop(val_cols,axis=1)
+	ent_df = ent_df.drop_duplicates().fillna('')
 	return df, val_cols
 
 def dic_to_ls(dic,typ):
@@ -37,14 +46,23 @@ def dic_to_ls(dic,typ):
 def etl_edge_entities(df, val_cols):
 	mult_df = df[val_cols+['id']]
 	redex = mult_df.copy()
+	redex = redex.replace(np.nan, '')
 	redex.index = mult_df['id']
-	ind_ls = dic_to_ls(redex['industry_vals'].dropna().str.split(',').to_dict(), 'INDUSTRY')
-	ceo_ls = dic_to_ls(redex['ceo_vals'].dropna().str.split(',').to_dict(), 'CEO')
-	chair_ls = dic_to_ls(redex['chair_vals'].dropna().str.split(',').to_dict(), 'CHAIRMAN')
-	hq_ls = dic_to_ls(redex['hq_vals'].dropna().str.split(',').to_dict(), 'HEADQUARTERS')
-	group_ls = dic_to_ls(redex['group_vals'].dropna().str.split(',').to_dict(),'GROUPED_IN')
-	country_ls = dic_to_ls(redex['country_vals'].dropna().str.split(',').to_dict(),'RESIDES_IN')
-	ent_edge_df = pd.DataFrame(ind_ls+ceo_ls+chair_ls+hq_ls+group_ls+country_ls, columns = ['company_id','val_id','typ'])
+	ls = dic_to_ls(redex['industry_vals'].dropna().str.split(',').to_dict(), 'INDUSTRY') \
+	+ dic_to_ls(redex['ceo_vals'].dropna().str.split(',').to_dict(), 'CEO')\
+	+ dic_to_ls(redex['chair_vals'].dropna().str.split(',').to_dict(), 'CHAIRMAN')\
+	+ dic_to_ls(redex['hq_vals'].dropna().str.split(',').to_dict(), 'HEADQUARTERS')\
+	+ dic_to_ls(redex['group_vals'].dropna().str.split(',').to_dict(),'GROUPED_IN')\
+	+ dic_to_ls(redex['country_vals'].dropna().str.split(',').to_dict(),'RESIDES_IN')\
+	+ dic_to_ls(redex['employee_count_quant'].dropna().str.split(',').to_dict(), 'EMPLOYEE_COUNT_BAND')\
+	+ dic_to_ls(redex['profit_quant'].dropna().str.split(',').to_dict(), 'PROFIT_BAND')\
+	+ dic_to_ls(redex['assets_quant'].dropna().str.split(',').to_dict(), 'ASSETS_BAND')\
+	+ dic_to_ls(redex['equity_quant'].dropna().str.split(',').to_dict(), 'EQUITY_BAND')\
+	+ dic_to_ls(redex['market_cap_quant'].dropna().str.split(',').to_dict(),'MARKET_CAP_BAND')
+	ent_edge_df = pd.DataFrame(ls, columns = ['company_id','val_id','typ'])
+	#final etl step specific to my tasks
+	ent_edge_df = ent_edge_df[~ent_edge_df['val_id'].str.contains('0_')]
+	ent_edge_df = ent_edge_df[ent_edge_df['val_id']!='']
 	return ent_edge_df
 
 def etl_edges(raw_df):
@@ -64,12 +82,14 @@ def run_etl(country):
 	ent_df.drop_duplicates().to_csv(ETL_ENTITY_PATH.format(COUNTRY=country),index=False)
 	print(country,'entities etl completed')
 	ent_edge_df = etl_edge_entities(df, val_cols)
-	ent_edge_df.drop_duplicates().to_csv(ETL_ENTITY_EDGE_PATH.format(COUNTRY=country),index=False)
+	if len(ent_edge_df):
+		ent_edge_df.drop_duplicates().to_csv(ETL_ENTITY_EDGE_PATH.format(COUNTRY=country),index=False)
 	print(country,'entity edges etl completed')
 	#now run edge etl
 	raw_df = pd.read_csv(EDGE_PATH.format(COUNTRY=country))
 	edge_df = etl_edges(raw_df)
-	edge_df.drop_duplicates().to_csv(ETL_EDGE_PATH.format(COUNTRY=country),index=False)
+	if len(edge_df):
+		edge_df.drop_duplicates().to_csv(ETL_EDGE_PATH.format(COUNTRY=country),index=False)
 	print(country,'edges etl completed')
 #multithreaded extraction
 if __name__ == '__main__':
