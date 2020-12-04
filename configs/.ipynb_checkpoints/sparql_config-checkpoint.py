@@ -4,11 +4,11 @@ COUNTRIES = ['Q30','Q148','Q17','Q183','Q145','Q668','Q142','Q155','Q38','Q16','
 #entity info
 ENTITY_QUERY_STRING = """
 SELECT DISTINCT ?business ?businessLabel ?officialname ?employees ?origindate ?profit ?assets ?equity ?markcap ?country
-(GROUP_CONCAT(DISTINCT ?industryLabel; SEPARATOR = ", ") AS ?industries)
-(GROUP_CONCAT(DISTINCT ?ceoLabel; SEPARATOR = ", ") AS ?ceos)
-(GROUP_CONCAT(DISTINCT ?chairLabel; SEPARATOR = ", ") AS ?chairs)
-(GROUP_CONCAT(DISTINCT ?hqLabel; SEPARATOR = ", ") AS ?hqs)
-(GROUP_CONCAT(DISTINCT ?groupLabel; SEPARATOR = ", ") AS ?groups)
+(GROUP_CONCAT(DISTINCT ?industry; SEPARATOR = ", ") AS ?industries)
+(GROUP_CONCAT(DISTINCT ?ceo; SEPARATOR = ", ") AS ?ceos)
+(GROUP_CONCAT(DISTINCT ?chair; SEPARATOR = ", ") AS ?chairs)
+(GROUP_CONCAT(DISTINCT ?hq; SEPARATOR = ", ") AS ?hqs)
+(GROUP_CONCAT(DISTINCT ?group; SEPARATOR = ", ") AS ?groups)
 WHERE {
 	VALUES ?socialmediatypes {
 		wdt:P2013
@@ -35,11 +35,6 @@ WHERE {
 	SERVICE wikibase:label {
 		bd:serviceParam wikibase:language "en".
 		?business rdfs:label ?businessLabel.
-		?industry rdfs:label ?industryLabel.
-		?ceo rdfs:label ?ceoLabel.
-		?chair rdfs:label ?chairLabel.
-		?hq rdfs:label ?hqLabel.
-		?group rdfs:label ?groupLabel.
 	}
 }
 GROUP BY ?business ?businessLabel ?officialname ?employees ?origindate ?profit ?assets ?equity ?markcap ?country
@@ -48,7 +43,7 @@ ENTITY_PATH = '../data/entities/{COUNTRY}.csv'
 
 #edge info
 EDGE_QUERY_STRING = """
-SELECT DISTINCT ?company ?companyLabel ?owner ?ownerLabel ?acquiredate ?pointintime
+SELECT DISTINCT ?company ?owner ?acquiredate
 WHERE {
   VALUES ?socialmediatypes {
     wdt:P2013
