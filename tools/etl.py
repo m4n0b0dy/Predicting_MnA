@@ -36,11 +36,11 @@ def etl_entities(raw_df):
 	ent_df = ent_df.drop_duplicates().fillna('')
 	return df, val_cols
 
-def dic_to_ls(dic,typ):
+def dic_to_ls(dic,typ,node_typ):
 	ret_ls = []
 	for k, vs in dic.items():
 		for v in vs:
-			ret_ls.append({'company_id':k,'val_id':v,'typ':typ})
+			ret_ls.append({'company_id':k,'val_id':v,'edge_typ':typ,'node_typ':node_typ})
 	return ret_ls
 
 def etl_edge_entities(df, val_cols):
@@ -48,18 +48,18 @@ def etl_edge_entities(df, val_cols):
 	redex = mult_df.copy()
 	redex = redex.replace(np.nan, '')
 	redex.index = mult_df['id']
-	ls = dic_to_ls(redex['industry_vals'].dropna().str.split(',').to_dict(), 'INDUSTRY') \
-	+ dic_to_ls(redex['ceo_vals'].dropna().str.split(',').to_dict(), 'CEO')\
-	+ dic_to_ls(redex['chair_vals'].dropna().str.split(',').to_dict(), 'CHAIRMAN')\
-	+ dic_to_ls(redex['hq_vals'].dropna().str.split(',').to_dict(), 'HEADQUARTERS')\
-	+ dic_to_ls(redex['group_vals'].dropna().str.split(',').to_dict(),'GROUPED_IN')\
-	+ dic_to_ls(redex['country_vals'].dropna().str.split(',').to_dict(),'RESIDES_IN')\
-	+ dic_to_ls(redex['employee_count_quant'].dropna().str.split(',').to_dict(), 'EMPLOYEE_COUNT_BAND')\
-	+ dic_to_ls(redex['profit_quant'].dropna().str.split(',').to_dict(), 'PROFIT_BAND')\
-	+ dic_to_ls(redex['assets_quant'].dropna().str.split(',').to_dict(), 'ASSETS_BAND')\
-	+ dic_to_ls(redex['equity_quant'].dropna().str.split(',').to_dict(), 'EQUITY_BAND')\
-	+ dic_to_ls(redex['market_cap_quant'].dropna().str.split(',').to_dict(),'MARKET_CAP_BAND')
-	ent_edge_df = pd.DataFrame(ls, columns = ['company_id','val_id','typ'])
+	ls = dic_to_ls(redex['industry_vals'].dropna().str.split(',').to_dict(), 'INDUSTRY', 'Industry') \
+	+ dic_to_ls(redex['ceo_vals'].dropna().str.split(',').to_dict(), 'CEO', 'Person')\
+	+ dic_to_ls(redex['chair_vals'].dropna().str.split(',').to_dict(), 'CHAIRMAN', 'Person')\
+	+ dic_to_ls(redex['hq_vals'].dropna().str.split(',').to_dict(), 'HEADQUARTERS', 'Location')\
+	+ dic_to_ls(redex['group_vals'].dropna().str.split(',').to_dict(),'GROUPED_IN', 'Group')\
+	+ dic_to_ls(redex['country_vals'].dropna().str.split(',').to_dict(),'RESIDES_IN', 'Location')\
+	+ dic_to_ls(redex['employee_count_quant'].dropna().str.split(',').to_dict(), 'EMPLOYEE_COUNT_BAND', 'Quant_Metric')\
+	+ dic_to_ls(redex['profit_quant'].dropna().str.split(',').to_dict(), 'PROFIT_BAND', 'Quant_Metric')\
+	+ dic_to_ls(redex['assets_quant'].dropna().str.split(',').to_dict(), 'ASSETS_BAND', 'Quant_Metric')\
+	+ dic_to_ls(redex['equity_quant'].dropna().str.split(',').to_dict(), 'EQUITY_BAND', 'Quant_Metric')\
+	+ dic_to_ls(redex['market_cap_quant'].dropna().str.split(',').to_dict(),'MARKET_CAP_BAND', 'Quant_Metric')
+	ent_edge_df = pd.DataFrame(ls, columns = ['company_id','val_id','edge_typ', 'node_typ'])
 	#final etl step specific to my tasks
 	ent_edge_df = ent_edge_df[~ent_edge_df['val_id'].str.contains('0_')]
 	ent_edge_df = ent_edge_df[ent_edge_df['val_id']!='']
