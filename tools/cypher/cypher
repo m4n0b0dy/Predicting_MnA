@@ -1,0 +1,59 @@
+#index nodes
+CREATE INDEX company_index
+FOR (n:Company)
+ON (n.id);
+
+CREATE INDEX property_index
+FOR (n:Tmp)
+ON (n.id);
+
+#create nodes
+:auto USING PERIODIC COMMIT 9999
+LOAD CSV WITH HEADERS FROM "file:///massive/entities.csv" AS line
+MERGE (n:Company {id: line.id})
+SET n.name=line.name,
+n.start_date=line.start_date
+
+#create property nodes/relationships
+:auto USING PERIODIC COMMIT 9999
+LOAD CSV WITH HEADERS FROM 'file:///massive/prop_edges.csv' AS line
+WITH line
+MERGE(node0:Company {id : line.company_id})
+MERGE(node1:Tmp {id : line.val_id, tmp:line.node_typ})
+WITH node0, node1, line
+CALL apoc.create.relationship(node0, line.edge_typ, {}, node1) YIELD rel
+RETURN 1
+
+#relabel for easier reading
+MATCH (n:Tmp)
+WHERE n.tmp = "Location"
+SET n:Location;
+
+MATCH (n:Tmp)
+WHERE n.tmp = "Industry"
+SET n:Industry;
+
+MATCH (n:Tmp)
+WHERE n.tmp = "Person"
+SET n:Person;
+
+MATCH (n:Tmp)
+WHERE n.tmp = "Group"
+SET n:Group;
+
+MATCH (n:Tmp)
+WHERE n.tmp = "Quant_Metric"
+SET n:Quant_Metric;
+
+#create relationships
+:auto USING PERIODIC COMMIT 9999
+LOAD CSV WITH HEADERS FROM "file:///massive/acq_edges.csv" AS line  with line where line.owned_id is not null and line.owner_id is not null
+MATCH (owned:Company {id: line.owned_id})
+MATCH (owner:Company {id: line.owner_id})
+MERGE (owner)-[:ACQUIRED]->(owned);
+
+#delete dupe rels
+match ()-[r]->() 
+match (s)-[r]->(e) 
+with s,e,type(r) as typ, tail(collect(r)) as coll 
+foreach(x in coll | delete x)
