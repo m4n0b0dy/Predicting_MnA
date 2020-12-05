@@ -1,28 +1,44 @@
-# Project Name
+# - Global Corporations Knowledge Graph (Company)--[size, location, industry]--(Company)
+# - M&A KG Machine Learning: (Company)--[ACQUIRED]--(Company) Link Prediction
 
 ## Project Description
-An ML project template and framework to quickly plan, iterate, and deploy to production
+Currently developing a Knowledge GraphDB with ~50k global corporations. Data extracted using SPARQL to query WikiData, WikiMedia’s massive Semantic Triplestore (~91m triples).
+
+## Project Goals
+Predict Mergers and Acquisitions using link prediction ML algorithms from metadata and graph embeddings (Node2Vec).
 
 ## Project Status
-- [x] Research
-- [ ] Data Collection
-- [ ] Model Selection
-- [ ] Development
-- [ ] Tuning and Optimization
-- [ ] Deployment
-- [ ] Project Published
+- [x] Write Wikidata Sparql Queries for global corporations and corp-to-corp acquisition relationships
+- [x] Build/Run extraction and cleaning of data using Wikidata API
+- [x] Build/Run ETL process to prepare CSVs for Neo4j GraphDB Node and Edge Ingestion
+- [x] Run actual ingestion with pre-processed data
+- [-] Inspect and verify ingestion
+- [ ] Peform Graph analytics exploratory data analysis (still important for ML even in Graph!)
+- [ ] Test Graph Database embedding models and research more graph native link prediction algos
+- [ ] Formalize ML approach and record performance
+- [ ] Clean repo and publish project
 
 ## Project Tools
 - Python
-  - Sklearn
+  - sparql_config
+  - Pandas
+  - JSON
+  - MultiThreading
+  - NetworkX
   - TensorFlow
-- GCP
+  - Sklearn
+  - Plotly
+- Neo4j
+  - Cypher
+- Docker base images
+  - Neo4j
+- Sparql
+- Wikidata
 
-## Deplpoyment and Publication
-- [Project Name Deployed Here](keenanvenuti.com/projects)
-- [Project Name Published Here](keenanvenuti.com/projects)
+## Publication
+- [Not Published yet](keenanvenuti.com/projects)
 
-## Installation and Running
+## Installation and Running (not ready yet)
 ```sh
 git clone git.repo.com
 ```
