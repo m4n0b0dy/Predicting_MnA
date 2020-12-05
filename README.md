@@ -1,11 +1,7 @@
-# - Global Corporations Knowledge Graph (Company)--[size, location, industry]--(Company)
-# - M&A KG Machine Learning: (Company)--[ACQUIRED]--(Company) Link Prediction
+# Using a Global Corporations Knowledge Graph to Predict Mergers and Acquisitions
 
 ## Project Description
-Currently developing a Knowledge GraphDB with ~50k global corporations. Data extracted using SPARQL to query WikiData, WikiMedia’s massive Semantic Triplestore (~91m triples).
-
-## Project Goals
-Predict Mergers and Acquisitions using link prediction ML algorithms from metadata and graph embeddings (Node2Vec).
+Currently developing a Knowledge GraphDB with ~50k global corporations. Data extracted using SPARQL to query WikiData, WikiMedia’s massive Semantic Triplestore (~91m triples). Example Schema: (Company)--[size, location, industry]--(Company). Goal is to predict Mergers and Acquisitions using link prediction ML algorithms from metadata and graph embeddings (Node2Vec). Example prediction: (Company)--[ACQUIRED]--(Company)
 
 ## Project Status
 - [x] Write Wikidata Sparql Queries for global corporations and corp-to-corp acquisition relationships
