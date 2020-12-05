@@ -8,7 +8,7 @@ Currently developing a Knowledge GraphDB with ~50k global corporations. Data ext
 - [x] Build/Run extraction and cleaning of data using Wikidata API
 - [x] Build/Run ETL process to prepare CSVs for Neo4j GraphDB Node and Edge Ingestion
 - [x] Run actual ingestion with pre-processed data
-- [-] Inspect and verify ingestion
+- [ ] Inspect and verify ingestion
 - [ ] Peform Graph analytics exploratory data analysis (still important for ML even in Graph!)
 - [ ] Test Graph Database embedding models and research more graph native link prediction algos
 - [ ] Formalize ML approach and record performance
