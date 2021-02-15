@@ -1,5 +1,6 @@
 import tensorflow as tf
 from GraphML import GraphML
+#todo use karate clube nod2vec
 class GraphNode2Vec(GraphML):
 	pass
 	'''
