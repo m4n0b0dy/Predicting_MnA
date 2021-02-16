@@ -1,4 +1,3 @@
-
 from neo4j import GraphDatabase
 import networkx as nx
 import pickle
@@ -78,37 +77,50 @@ class BaseGraph(nx.MultiDiGraph):
 
 	def save_graph(self, fname):
 		#Can't pickle neo4j driver!
-		self.driver = None
+		try:
+			del self.driver
+		except:
+			pass
 		nx.write_gpickle(self, fname+".gpickle")
 
-	#conversion attributes and decorators
+	#conversion as attributes
 	@property
 	def as_digraph(self):
 		return nx.DiGraph(self)
-
+	
 	@property
 	def as_undigraph(self):
-		return self.to_undirected(self)
+		return self.to_undirected()
 
 	@property
 	def as_graph(self):
 		return nx.Graph(self)
+	
+	'''#was trying to find a way to use a universal decorator as these
+				#all run the same way with the lambda functions.
+				#this ended up getting ugly and not working
+				def run_conv(master_func):
+					def func(conv_func):
+						def sub_func(g):
+							return master_func(conv_func(g))
+						return sub_func
+					return func
+			
+				@staticmethod
+				@run_conv
+				def run_as_digraph(func):
+					return func(BaseGraph.as_digraph)'''
 
-	#tried to give these their own decorator to prevent copy/paste couldn't get a good example
+	#decorators to run functions with different types
+	#clean and readable, but a little copy paste
 	@staticmethod
 	def run_as_digraph(func):
-		def _run_func(_graph):
-			return func(_graph.as_digraph)
-		return _run_func
+		return lambda _ : func(_.as_digraph)
 
 	@staticmethod
 	def run_as_undigraph(func):
-		def _run_func(_graph):
-			return func(_graph.as_undigraph)
-		return _run_func
+		return lambda _ : func(_.as_undigraph)
 
 	@staticmethod
 	def run_as_graph(func):
-		def _run_func(_graph):
-			return func(_graph.as_graph)
-		return _run_func
+		return lambda _ : func(_.as_graph)
