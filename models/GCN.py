@@ -1,7 +1,10 @@
 import tensorflow as tf
-from GraphML import GraphML
+import sys
+sys.path.insert(0, '../')
+from models.GraphML import GraphML
 class GraphGCN(GraphML):
-	pass
+	def __init__(self, *args, **kwargs):
+		GraphML.__init__(self, *args, **kwargs)
 	'''
 	TODO
 	Implement Graph Convolutional network, inheriting from a base graph ML object
