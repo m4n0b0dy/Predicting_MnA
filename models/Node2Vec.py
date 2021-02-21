@@ -31,5 +31,4 @@ class GraphNode2Vec(GraphML, Node2Vec):
 						 min_count=self.min_count,
 						 workers=self.workers,
 						 seed=self.seed)
-
 		self._embedding = {n:model[str(n)] for n in graph.nodes}
